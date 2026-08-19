@@ -12,10 +12,12 @@ SOURCES = [
 
 CONFIG_RE = re.compile(r"(?:vless|vmess|trojan|ss)://[^\s\"'<>]+")
 
+
 def fetch(url):
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=25) as r:
         return r.read().decode("utf-8", "ignore")
+
 
 def extract_configs(text):
     out = []
@@ -34,6 +36,7 @@ def extract_configs(text):
                 pass
     return out
 
+
 def host_port(link):
     after = link.split("://", 1)[1] if "://" in link else link
     if "@" in after:
@@ -45,12 +48,14 @@ def host_port(link):
             return h, int(p)
     return None
 
+
 def tcp_ok(hp, timeout=4):
     try:
         with socket.create_connection(hp, timeout=timeout):
             return True
     except Exception:
         return False
+
 
 def main():
     all_links, counts = [], {}
@@ -72,10 +77,9 @@ def main():
         for l, good in ex.map(lambda l: (l, bool(host_port(l)) and tcp_ok(host_port(l))), uniq):
             if good:
                 ok.append(l)
-    os.makedirs("public", exist_ok=True)
-    with open("public/sub.txt", "w") as f:
+    with open("sub.txt", "w") as f:
         f.write(base64.b64encode(("\n".join(ok)).encode()).decode())
-    with open("public/raw.txt", "w") as f:
+    with open("raw.txt", "w") as f:
         f.write("\n".join(ok))
     html = """<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><title>کانفیگ رایگان</title>
 <style>body{font-family:Tahoma;max-width:600px;margin:40px auto;padding:0 15px;line-height:1.8}code{background:#eee;padding:2px 6px;border-radius:4px;word-break:break-all}.box{border:1px solid #ccc;border-radius:8px;padding:12px;margin:10px 0}</style></head>
@@ -85,9 +89,10 @@ def main():
 <p>۲. این آدرس رو بذار: <code>https://komoterdon.github.io/free-sub/sub.txt</code></p>
 <p>۳. ذخیره کن و آپدیت بزن.</p>
 <p>⚠️ کانفیگ‌های رایگان موقتی‌ان — اگه کند/قطع شد، آپدیت بگیر.</p></body></html>""" % (len(ok), time.strftime("%Y-%m-%d %H:%M"))
-    with open("public/index.html", "w") as f:
+    with open("index.html", "w") as f:
         f.write(html)
     print("working=%d collected=%d unique=%d counts=%s" % (len(ok), len(all_links), len(uniq), counts))
+
 
 if __name__ == "__main__":
     main()
